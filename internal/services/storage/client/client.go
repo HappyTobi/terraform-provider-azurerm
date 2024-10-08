@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	storage_v2023_01_01 "github.com/hashicorp/go-azure-sdk/resource-manager/storage/2023-01-01"
+	storage_v2023_05_01 "github.com/hashicorp/go-azure-sdk/resource-manager/storage/2023-05-01"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/storagesync/2020-03-01/cloudendpointresource"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/storagesync/2020-03-01/registeredserverresource"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/storagesync/2020-03-01/serverendpointresource"
@@ -23,7 +24,8 @@ var StorageDomainSuffix *string
 type Client struct {
 	StorageDomainSuffix string
 
-	ResourceManager *storage_v2023_01_01.Client
+	ResourceManager    *storage_v2023_01_01.Client
+	ResourceManagerNew *storage_v2023_05_01.Client
 	// TODO: import the Storage Sync Meta Client and use that
 	SyncCloudEndpointsClient   *cloudendpointresource.CloudEndpointResourceClient
 	SyncGroupsClient           *syncgroupresource.SyncGroupResourceClient
@@ -44,6 +46,13 @@ func NewClient(o *common.ClientOptions) (*Client, error) {
 	StorageDomainSuffix = storageSuffix
 
 	resourceManager, err := storage_v2023_01_01.NewClientWithBaseURI(o.Environment.ResourceManager, func(c *resourcemanager.Client) {
+		o.Configure(c, o.Authorizers.ResourceManager)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("building ResourceManager clients: %+v", err)
+	}
+
+	resourceManagerNew, err := storage_v2023_05_01.NewClientWithBaseURI(o.Environment.ResourceManager, func(c *resourcemanager.Client) {
 		o.Configure(c, o.Authorizers.ResourceManager)
 	})
 	if err != nil {
@@ -84,6 +93,7 @@ func NewClient(o *common.ClientOptions) (*Client, error) {
 	// (which should fix #2977) when the storage clients have been moved in here
 	client := Client{
 		ResourceManager:            resourceManager,
+		ResourceManagerNew:         resourceManagerNew,
 		SyncCloudEndpointsClient:   syncCloudEndpointsClient,
 		SyncRegisteredServerClient: syncRegisteredServersClient,
 		SyncServerEndpointsClient:  syncServerEndpointClient,

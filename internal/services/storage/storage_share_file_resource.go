@@ -101,6 +101,16 @@ func resourceStorageShareFile() *pluginsdk.Resource {
 				Computed: true,
 			},
 
+			"resource_type": {
+				Type:     pluginsdk.TypeString,
+				Optional: true,
+				Default:  "data_storage",
+				ValidateFunc: validation.StringInSlice([]string{
+					"data_storage",
+					"management_storage",
+				}, false),
+			},
+
 			"metadata": MetaDataSchema(),
 		},
 	}
